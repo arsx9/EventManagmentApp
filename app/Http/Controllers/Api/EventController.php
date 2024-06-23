@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\EventResource;
+use App\Http\Traits\CanLoadRelationships;
 use App\models\Event;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
@@ -12,13 +13,22 @@ use function PHPUnit\Framework\returnSelf;
 
 class EventController extends Controller
 {
+    use CanLoadRelationships;
+    private array $relations = ['user', 'attendees', 'attendees.user'];
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        return EventResource::collection(Event::with('user')->get());
+        $query = $this->loadRelationships(Event::query());
+        // in the upper code chunck we are making this line but for more then one relation if in query it is decleared more then one
+        // Event::with('user')->paginate()
+
+        return EventResource::collection(
+            $query->latest()->paginate()
+        );
     }
+
 
     /**
      * Store a newly created resource in storage.
@@ -34,7 +44,7 @@ class EventController extends Controller
             ]),
             'user_id' => 1
         ]);
-        return new EventResource($event);
+        return new EventResource($this->loadRelationships($event));
     }
 
     /**
@@ -42,8 +52,7 @@ class EventController extends Controller
      */
     public function show(Event $event)
     {
-        $event->load('user', 'attendees');
-        return new EventResource($event);
+        return new EventResource($this->loadRelationships($event));
     }
 
     /**
@@ -59,7 +68,7 @@ class EventController extends Controller
                 'end_time' => 'sometimes|date|after:start_time'
             ])
         );
-        return new EventResource($event);
+        return new EventResource($this->loadRelationships($event));
     }
 
     /**
