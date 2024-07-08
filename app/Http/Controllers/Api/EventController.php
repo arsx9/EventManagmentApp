@@ -8,6 +8,7 @@ use App\Http\Traits\CanLoadRelationships;
 use App\models\Event;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Gate;
 
 use function PHPUnit\Framework\returnSelf;
 
@@ -21,6 +22,7 @@ class EventController extends Controller
     public function __construct()
     {
         $this->middleware('auth:sanctum')->except('index', 'show');
+        $this->authorizeResource(Event::class, 'event');
     }
     public function index()
     {
@@ -64,6 +66,10 @@ class EventController extends Controller
      */
     public function update(Request $request, Event $event)
     {
+        // if (Gate::denies('update-event', $event)) {
+        //     abort(403, 'You are not authorize to update this');
+        // }
+        // $this->authorize('update-event', $event);
         $event->update(
             $request->validate([
                 'name' => 'sometimes|string|max:255',
